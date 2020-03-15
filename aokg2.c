@@ -1,8 +1,9 @@
-//Кардиоида: вращение, масштабирование, смещение оси координат
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
 #include <math.h>
+#include <SDL2_ttf/SDL_ttf.h>
+
 #define PI 3.1415
 void drawPoint (SDL_Renderer *renderer, int x, int y) {
     SDL_RenderDrawPoint(renderer, x, y);
@@ -52,19 +53,52 @@ int main() {
         printf("SDL_CreateRenderer Error: %s", SDL_GetError());
         return 1;
     }
+    
+    SDL_SetRenderDrawColor(ren, 255, 255, 255, 255);
+    SDL_RenderClear(ren); // fill the scene with white
+
+        SDL_Rect rect1;
+        rect1.x = 50;
+        rect1.y = 50;
+        rect1.w = 200;
+        rect1.h = 32;
+
+    SDL_RenderDrawRect(ren, &rect1);
+    SDL_SetRenderDrawColor(ren, 255, 0, 0, 255); // the rect color (solid red)
+    SDL_RenderFillRect(ren, &rect1);
+    SDL_RenderPresent(ren);
+    SDL_StartTextInput();
+    SDL_SetTextInputRect(&rect1);
+    char *text = (char*)malloc(255);
+    char *newText = (char*)malloc(255);
+    float angle = 0;
     while (1) {
         SDL_Event e;
         if (SDL_PollEvent(&e)) {
             if (e.type == SDL_QUIT) {
                 break;
             }
+            else if (e.type == SDL_TEXTINPUT || e.type == SDL_KEYDOWN ) {
+                //system("clear");
+                if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_BACKSPACE && strlen(text)>0) {
+                    strncpy(newText, text, strlen(text)-1);
+                    text = newText;
+                    newText = (char*)malloc(255);
+                    angle = PI*atoi(text)/180;
+                }
+                else if (e.type == SDL_TEXTINPUT) {
+                    strcat(text, e.text.text);
+                    angle = PI*atoi(text)/180;
+                }
+            }
+            
         }
-        int scale = 100;
+        int scale = 100, shiftX = 400, shiftY = 400;
         
-        
-        for (double angle = 0, scale = 100, shiftX = 400, shiftY = 400; angle < 40 * PI; angle+=PI/13, scale+=-20+ rand()%41, shiftX+=-20+ rand()%41, shiftY+=-20+rand()%41){
+        //for (double angle = 0, scale = 100, shiftX = 400, shiftY = 400; angle < 40 * PI; angle+=PI/13, scale+=-20+ rand()%41, shiftX+=-20+ rand()%41, shiftY+=-20+rand()%41){
             SDL_SetRenderDrawColor(ren, 18, 18, 18, 255);
             SDL_RenderClear(ren);
+            
             SDL_SetRenderDrawColor(ren, 180, 180, 180, 255);
             drawLine(ren, -shiftX*cos(angle) + shiftX, shiftX*sin(angle) + shiftY, shiftX*cos(angle)+shiftX, -shiftX*sin(angle) + shiftY);
             drawLine(ren, -shiftY*sin(angle) + shiftX, -shiftY*cos(angle) + shiftY, shiftY*sin(angle) + shiftX , shiftY*cos(angle)+shiftY);
@@ -85,14 +119,15 @@ int main() {
               ( - 3*sin(angle)/4 - sqrt(3)*3*cos(angle)/4 )*scale+shiftY
             );
             drawBoldPoint(ren, shiftX, shiftY);
+            SDL_RenderDrawRect(ren, &rect1);
             SDL_RenderPresent(ren);
             
-        }
-        
-      
+        //}
     }
+    SDL_StopTextInput();
     SDL_DestroyRenderer(ren);
     SDL_DestroyWindow(win);
     SDL_Quit();
+    printf("\nthe text input is: %s\n\n",text);
     return 0;
 }
